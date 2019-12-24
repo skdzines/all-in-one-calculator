@@ -1,0 +1,71 @@
+html {
+	font-size: 10px;
+	body {
+		text-rendering: optimizeLegibility;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		font-family: 'Helvetica', $Helvetica-Neue-Regular, 'sans';
+		color: $primaryFontColor;
+		position: absolute;
+		top: 0;
+		right: 0;
+		left: 0;
+		bottom: 0;
+		line-height: 1.2;
+		padding: 2rem;
+		font-size: 1.2rem;
+		div#application {
+			height: 100%;
+			width: 100%;
+			* {
+				box-sizing: border-box;
+				// user-select: none;
+			}
+		}
+		table {
+			border-left: 1px solid;
+			border-top: 1px solid;
+			width: 100%;
+			margin-bottom: 2rem;
+			th {
+				font-weight: bold;
+			}
+			th, td {
+				text-align: left;
+				padding: .5rem;
+				border-right: 1px solid;
+				border-bottom: 1px solid;
+			}
+		}
+		form {
+			border-bottom: 1px solid #ccc;
+			margin-bottom: 1rem;
+			padding: 0 0 1rem;
+			h2 {
+				font-weight: bold;
+			}
+			div, section {
+				padding: 1rem;
+				background-color: #efefef;
+			}
+			div {
+				display: flex;
+				margin: 1rem 0 2rem;
+			}
+			label {
+				width: 33%;
+				input, select {
+					margin-top: .5rem;
+					display: block;
+					padding: .3rem;
+				}
+			}
+			.future-withdrawals, .income {
+				margin-bottom: 2rem;
+				div {
+					margin: 1rem 0;
+				}
+			}
+		}
+	}
+}
