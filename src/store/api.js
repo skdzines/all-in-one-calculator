@@ -1,5 +1,5 @@
 import { combineReducers } from 'redux';
-import creator from 'redux-boilerplate-reduction';
+import creator from 'common/creator';
 
 const API_FETCH_BEGIN = 'api/beginFetch';
 const API_FETCH_END = 'api/endFetch';

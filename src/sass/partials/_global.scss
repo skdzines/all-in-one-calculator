@@ -37,6 +37,10 @@ html {
 				border-bottom: 1px solid;
 			}
 		}
+		h2 {
+			font-size: 2rem;
+			font-weight: bold;
+		}
 		form {
 			border-bottom: 1px solid #ccc;
 			margin-bottom: 1rem;
@@ -51,6 +55,7 @@ html {
 			div {
 				display: flex;
 				margin: 1rem 0 2rem;
+				align-items: center;
 			}
 			label {
 				width: 33%;
@@ -60,7 +65,7 @@ html {
 					padding: .3rem;
 				}
 			}
-			.future-withdrawals, .income {
+			.future-withdrawals, .future-deposits, .income {
 				margin-bottom: 2rem;
 				div {
 					margin: 1rem 0;

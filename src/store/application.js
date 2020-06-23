@@ -1,6 +1,6 @@
 import { combineReducers } from 'redux';
 import { action as apiAction } from 'store/api';
-import creator from 'redux-boilerplate-reduction';
+import creator from 'common/creator';
 
 // Actions
 

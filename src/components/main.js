@@ -16,20 +16,34 @@ export default Connect(
 		constructor(props) {
 			super(props);
 			this.state = {
-				home_value: 450000,
+				LTV: .8,
+				home_value: 475000,
 				home_value_increase_per_year: 3.4,
-				principal_balance: 365000,
-				property_insurance: 1683,
+				principal_balance: 380000,
+				property_insurance: 1988,
 				annual_taxes: 8248.86,
-				monthly_net_income: 9706,
-				monthly_withdrawals: 4899,
-				interest_rate: 6,
-				rate_adjustment: .5,
+				monthly_withdrawals: 5074,
+				interest_rate: 3.93,
+				rate_adjustment: 0,
 				inflation_rate: 2.5,
 				cost_of_living_increase: 3,
 				results: null,
 				future_withdrawals: [],
-				income: []
+				future_deposits: [],
+				income: [
+					{
+						amount: 2810.42,
+						frequency: '24',
+						pay_date: moment(),
+						deposit_schedule: []
+					},
+					{
+						amount: 2089.48,
+						frequency: '26',
+						pay_date: moment(),
+						deposit_schedule: []
+					}
+				]
 			}
 		}
 
@@ -76,6 +90,7 @@ export default Connect(
 			let home_value = parseInt(this.state.home_value);
 
 			const table = [];
+			let interestPayments = [];
 			let count = 1;
 
 			if(deposits > withdrawals) {
@@ -83,6 +98,12 @@ export default Connect(
 					let leapYear = this.determineLeapYear(moment(currentYear));
 					let daysInYear = leapYear ? 366 : 365;
 					let newYear = moment(date).format("YYYY") !== currentYear;
+
+					this.state.future_deposits.forEach(deposit => {
+						if(parseInt(deposit.months_from_now) === count) {
+							balance = balance - parseInt(deposit.amount);
+						}
+					});
 
 					this.state.future_withdrawals.forEach(withdrawal => {
 						if(parseInt(withdrawal.months_from_now) === count) {
@@ -97,15 +118,22 @@ export default Connect(
 						home_value = home_value * (this.state.home_value_increase_per_year/100) + home_value;
 					}
 
+					const futureDeposit = this.state.future_deposits.filter(deposit => parseInt(deposit.months_from_now) === count);
 					const futureWithdrawal = this.state.future_withdrawals.filter(withdrawal => parseInt(withdrawal.months_from_now) === count);
 
 					let minimumPayment = this.calculateMinimumPayment(balance, interest_rate, date, daysInYear);
+					interestPayments.push(minimumPayment);
+
 					table.push(<tr key={'month-' + count}>
 								<td>{count  + ` (${moment(date).format('MMM')})`}</td>
 								<td>{this.formatCurrency(balance)}</td>
-								<td>{futureWithdrawal.map(withdrawal => {
-									return <span>{`Purpose: ${withdrawal.purpose} (${this.formatCurrency(parseFloat(withdrawal.amount))})`}<br/></span>;
+								<td>{futureDeposit.map((deposit, index) => {
+									return <span key={`deposit-${index}`}>{`${this.formatCurrency(parseFloat(deposit.amount))} : ${deposit.purpose}`}<br/></span>;
 								})}</td>
+								<td>{futureWithdrawal.map((withdrawal, index) => {
+									return <span key={`withdrawal-${index}`}>{`(${this.formatCurrency(parseFloat(withdrawal.amount))}) : ${withdrawal.purpose}`}<br/></span>;
+								})}</td>
+								<td>{this.formatCurrency(home_value * this.state.LTV - balance)}</td>
 								<td>{this.formatCurrency(home_value - balance)}</td>
 								<td>{this.formatCurrency(deposits)}</td>
 								<td>{this.formatCurrency(withdrawals + minimumPayment)}</td>
@@ -127,17 +155,21 @@ export default Connect(
 
 				const years = Math.floor((count-1) / 12);
 				const months = (count-1) % 12;
+				const averageMonthlyInterest = interestPayments.reduce((a, b) => a + b) / interestPayments.length;
 
 				this.setState({
 					results: <div>
-							<p>Loan will be paid off in {years} years and {months} months.</p>
+							<h2>Loan will be paid off in {years} years and {months} months.</h2>
+							<p>Average monthly interest payment: {this.formatCurrency(averageMonthlyInterest)}</p>
 							<table>
 								<thead>
 									<tr>
 										<th>Month</th>
 										<th>Balance</th>
+										<th>Future Deposit</th>
 										<th>Future Draws</th>
-										<th>Equity</th>
+										<th>Equity (LTV)</th>
+										<th>Total Equity</th>
 										<th>Deposits</th>
 										<th>Withdrawals (Inc. Interest)</th>
 										<th>Rate</th>
@@ -171,6 +203,21 @@ export default Connect(
 			});
 		}
 
+		addFutureDeposit = (event) => {
+			event.preventDefault();
+
+			const newDeposits = this.state.future_deposits;
+			newDeposits.push({
+				amount: 0,
+				months_from_now: 0,
+				purpose: ''
+			});
+
+			this.setState({
+				future_deposits: newDeposits
+			});
+		}
+
 		addIncome = (event) => {
 			event.preventDefault();
 
@@ -195,13 +242,22 @@ export default Connect(
 			this.setState(newState);
 		}
 
-		updateFuture = (index, event) => {
+		updateFutureWithdrawal = (index, event) => {
 			const newState = this.state.future_withdrawals;
 
 			newState[index][event.target.id] = event.target.value;
 
 			this.setState(newState);
 		}
+
+		updateFutureDeposit = (index, event) => {
+			const newState = this.state.future_deposits;
+
+			newState[index][event.target.id] = event.target.value;
+
+			this.setState(newState);
+		}
+
 		setIncome = (index, event) => {
 			const newState = this.state.income;
 
@@ -218,6 +274,14 @@ export default Connect(
 				newState[index].deposit_schedule = schedule;
 			}
 
+			this.setState(newState);
+		}
+
+		removeItem = (state, index, event) => {
+			event.preventDefault();
+			const newState = state;
+			
+			newState.splice(index, 1);
 			this.setState(newState);
 		}
 
@@ -272,15 +336,38 @@ export default Connect(
 											<option value="">Select</option>
 											<option value="52">Weekly</option>
 											<option value="26">Bi-weekly</option>
+											<option value="24">Semi-monthly</option>
 										</select>
 									</label>
 									<label>
 										Next pay date:
 										<input type="date" id="pay_date" value={moment(income.pay_date).format('YYYY-MM-DD')} onChange={this.setIncome.bind(null, index)} />
 									</label>
+									<button onClick={this.removeItem.bind(null, this.state.income, index)}>Remove</button>
 								</div>
 							})}
 							<button onClick={this.addIncome}>Add</button>
+						</section>
+						<section className="future-deposits">
+							<h2>Future Deposits:</h2>
+							{this.state.future_deposits.map((future, index) => {
+								return <div key={`withdrawal-${index}`}>
+									<label>
+										Amount:
+										<input type="number" id="amount" value={future.amount} onChange={this.updateFutureDeposit.bind(null, index)} />
+									</label>
+									<label>
+										Months from now:
+										<input type="number" id="months_from_now" value={future.months_from_now} onChange={this.updateFutureDeposit.bind(null, index)} />
+									</label>
+									<label>
+										Purpose:
+										<input type="text" id="purpose" value={future.purpose} onChange={this.updateFutureDeposit.bind(null, index)} />
+									</label>
+									<button onClick={this.removeItem.bind(null, this.state.future_deposits, index)}>Remove</button>
+								</div>
+							})}
+							<button onClick={this.addFutureDeposit}>Add</button>
 						</section>
 						<section className="future-withdrawals">
 							<h2>Future Withdrawals:</h2>
@@ -288,16 +375,17 @@ export default Connect(
 								return <div key={`withdrawal-${index}`}>
 									<label>
 										Amount:
-										<input type="number" id="amount" value={future.amount} onChange={this.updateFuture.bind(null, index)} />
+										<input type="number" id="amount" value={future.amount} onChange={this.updateFutureWithdrawal.bind(null, index)} />
 									</label>
 									<label>
 										Months from now:
-										<input type="number" id="months_from_now" value={future.months_from_now} onChange={this.updateFuture.bind(null, index)} />
+										<input type="number" id="months_from_now" value={future.months_from_now} onChange={this.updateFutureWithdrawal.bind(null, index)} />
 									</label>
 									<label>
 										Purpose:
-										<input type="text" id="purpose" value={future.purpose} onChange={this.updateFuture.bind(null, index)} />
+										<input type="text" id="purpose" value={future.purpose} onChange={this.updateFutureWithdrawal.bind(null, index)} />
 									</label>
+									<button onClick={this.removeItem.bind(null, this.state.future_withdrawals, index)}>Remove</button>
 								</div>
 							})}
 							<button onClick={this.addFutureWithdrawal}>Add</button>
