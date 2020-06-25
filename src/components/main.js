@@ -21,8 +21,8 @@ export default Connect(
 				home_value_increase_per_year: 3.4,
 				principal_balance: 380000,
 				property_insurance: 1988,
-				annual_taxes: 8248.86,
-				monthly_withdrawals: 5074,
+				annual_taxes: 8279.30,
+				monthly_withdrawals: 4835.40,
 				interest_rate: 3.93,
 				rate_adjustment: 0,
 				inflation_rate: 2.5,
@@ -124,15 +124,20 @@ export default Connect(
 					let minimumPayment = this.calculateMinimumPayment(balance, interest_rate, date, daysInYear);
 					interestPayments.push(minimumPayment);
 
+					let taxesDue = moment(date).format("MMMM") === 'January' || moment(date).format("MMMM") === 'June';
+
 					table.push(<tr key={'month-' + count}>
 								<td>{count  + ` (${moment(date).format('MMM')})`}</td>
 								<td>{this.formatCurrency(balance)}</td>
 								<td>{futureDeposit.map((deposit, index) => {
-									return <span key={`deposit-${index}`}>{`${this.formatCurrency(parseFloat(deposit.amount))} : ${deposit.purpose}`}<br/></span>;
+									return <span key={`deposit-${index}`}>{`${this.formatCurrency(parseFloat(deposit.amount))} ${deposit.purpose.length ? `: ${deposit.purpose}` : ''}`}</span>;
 								})}</td>
-								<td>{futureWithdrawal.map((withdrawal, index) => {
-									return <span key={`withdrawal-${index}`}>{`(${this.formatCurrency(parseFloat(withdrawal.amount))}) : ${withdrawal.purpose}`}<br/></span>;
-								})}</td>
+								<td>
+									{taxesDue ? `(tax payment: ${parseFloat(this.state.annual_taxes/2)})` : ''}
+									{futureWithdrawal.map((withdrawal, index) => {
+										return <span key={`withdrawal-${index}`}>{`(${this.formatCurrency(parseFloat(withdrawal.amount))}) ${withdrawal.purpose.length ? `: ${withdrawal.purpose}` : ''}`}</span>;
+									})}
+								</td>
 								<td>{this.formatCurrency(home_value * this.state.LTV - balance)}</td>
 								<td>{this.formatCurrency(home_value - balance)}</td>
 								<td>{this.formatCurrency(deposits)}</td>
@@ -140,9 +145,10 @@ export default Connect(
 								<td>{interest_rate + '%'}</td>
 								<td>{this.formatCurrency(minimumPayment)}</td>
 							</tr>);
+
 					balance = balance - (deposits - withdrawals) + minimumPayment;
 					date = moment(date).add(1, 'months').format("YYYY-MM-DD");
-					if(moment(date).format("MMMM") === 'January' || moment(date).format("MMMM") === 'June') {
+					if(taxesDue) {
 						balance = balance + parseFloat(this.state.annual_taxes / 2);
 					}
 					if(newYear) {
@@ -159,7 +165,7 @@ export default Connect(
 
 				this.setState({
 					results: <div>
-							<h2>Loan will be paid off in {years} years and {months} months.</h2>
+							<h2>Loan will be paid off in {count-1} months. ({years} years and {months} months)</h2>
 							<p>Average monthly interest payment: {this.formatCurrency(averageMonthlyInterest)}</p>
 							<table>
 								<thead>

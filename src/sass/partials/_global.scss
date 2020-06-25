@@ -36,6 +36,11 @@ html {
 				border-right: 1px solid;
 				border-bottom: 1px solid;
 			}
+			td {
+				span {
+					display: block;
+				}
+			}
 		}
 		h2 {
 			font-size: 2rem;
